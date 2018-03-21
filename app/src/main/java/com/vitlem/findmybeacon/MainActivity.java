@@ -280,14 +280,16 @@ public class MainActivity extends AppCompatActivity {
     private String getDistance(double accuracy, String s) {
         try {
             if (accuracy == -1.0) {
+                setcolor(s, Color.YELLOW);
                 return "Unknown " + accuracy;
             } else if (accuracy < 2) {
-
+                setcolor(s, Color.GREEN);
                 return "Immediate";
             } else if (accuracy < 6) {
-
+                setcolor(s, Color.GREEN);
                 return "Near " + accuracy;
             } else {
+                setcolor(s, Color.RED);
                 popup(s + accuracy);
                 return "Far " + accuracy;
             }
@@ -306,14 +308,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void popup(String s) {
+
         builder = new NotificationCompat.Builder(this);
         builder.setContentTitle(s.split(";")[0])
                 .setSmallIcon(R.drawable.ic_action_name)
                 .setDefaults(DEFAULT_SOUND | DEFAULT_VIBRATE)
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
         mNotificationManager.notify(index++, builder.build());
-        TextView t = (TextView)findViewById(Integer.valueOf(s.split(";")[1]));
-        t.setBackgroundColor(Color.GREEN);
+
+
+    }
+
+    private void setcolor(String s, int c)
+    {
+        //Integer.valueOf(s.split(";")[1])
+        ((TextView)findViewById(Integer.valueOf(s.split(";")[1]))).setTextColor(c);
+        //ConstraintLayout cl = (ConstraintLayout) findViewById(R.id.Mainc);
+       // t.setBackgroundColor(c);
+       // cl.refreshDrawableState();
+
     }
 
     @Override
@@ -467,6 +480,8 @@ public class MainActivity extends AppCompatActivity {
             t.setId(index);
             t.setText(hashReg.get((hashReg.keySet().toArray())[index]));
             t.setTextSize(22);
+            //t.setTop((20+index*300));
+            //t.setGravity((20+index*300));
             t.setPadding(20, (20+index*300) , 0, 0);
            // t.setBackgroundColor(Color.GREEN);
             cl.addView(t);
