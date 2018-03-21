@@ -12,7 +12,9 @@ import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -23,6 +25,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import java.nio.ByteBuffer;
 import java.text.DateFormat;
@@ -45,13 +48,14 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothAdapter mBluetoothAdapter;
     private static final int REQUEST_FINE_LOCATION = 0;
     private static ListView lv;
-    private static Hashtable<String,String> hashReg  = new Hashtable<String,String>();
+    private static Hashtable<String, String> hashReg = new Hashtable<String, String>();
     public final static String EXTRA_MESSAGE = "Udid";
     static Context context;
-    DateFormat df = DateFormat.getDateTimeInstance (DateFormat.SHORT, DateFormat.SHORT, new Locale("en", "EN"));
+    DateFormat df = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, new Locale("en", "EN"));
     NotificationCompat.Builder builder;
-    NotificationManager mNotificationManager ;
-    private int index=0;
+    NotificationManager mNotificationManager;
+    private int index = 0;
+    private ListView l;
 
     //LIST OF ARRAY STRINGS WHICH WILL SERVE AS LIST ITEMS
     ArrayList<String> listItems = new ArrayList<String>();
@@ -66,15 +70,20 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         context = MainActivity.this;
+
         ReadRegList();
         loadPermissions(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_FINE_LOCATION);
         loadPermissions(Manifest.permission.ACCESS_COARSE_LOCATION, REQUEST_FINE_LOCATION);
 
         mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
+        l = (ListView) findViewById(R.id.ListR);
+        l.setVisibility(View.INVISIBLE);
+       // createTextview();
         final Button Scanbutton = (Button) findViewById(R.id.ScanB);
         Scanbutton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                l.setVisibility(View.VISIBLE);
                 ScanNow();
             }
         });
@@ -82,6 +91,8 @@ public class MainActivity extends AppCompatActivity {
         final Button Findbutton = (Button) findViewById(R.id.FindS);
         Findbutton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                l.setVisibility(View.INVISIBLE);
+                //createTextview();
                 FindNow();
             }
         });
@@ -89,6 +100,10 @@ public class MainActivity extends AppCompatActivity {
         final Button Stopbutton = (Button) findViewById(R.id.ScanS);
         Stopbutton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                Button b= (Button)findViewById(R.id.FindS);
+                b.setEnabled(true);
+                b= (Button)findViewById(R.id.ScanB);
+                b.setEnabled(true);
                 mBluetoothLeScanner.stopScan(mScanCallback);
                 mBluetoothLeScanner.stopScan(mScanCallbackWithFind);
             }
@@ -97,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
         final Button ManageButton = (Button) findViewById(R.id.ManageS);
         ManageButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                Intent i = new Intent(getApplicationContext(),MangeBeacon.class);
+                Intent i = new Intent(getApplicationContext(), MangeBeacon.class);
                 startActivity(i);
             }
         });
@@ -123,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
                 //try {
                 //hashReg.put(itemValue.split("_")[1].toString(), itemValue.split("_")[2].toString() );
                 Log.d("hashReg.put", itemValue.split("_")[1].toString());
-                sendMessage(view, itemValue.split("_")[1].toString() + "_" +itemValue.split("_")[2].toString(),AddBeaconInfo.class);
+                sendMessage(view, itemValue.split("_")[1].toString() + "_" + itemValue.split("_")[2].toString(), AddBeaconInfo.class);
                 // }catch (Exception e)
                 // {
                 //   Toast.makeText(getApplicationContext(),
@@ -169,8 +184,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void setScanSettings() {
         ScanSettings.Builder mBuilder = new ScanSettings.Builder();
-       // mBuilder.setReportDelay(200);
-       // mBuilder.setScanMode(ScanSettings.SCAN_MODE_LOW_POWER);
+        // mBuilder.setReportDelay(200);
+        // mBuilder.setScanMode(ScanSettings.SCAN_MODE_LOW_POWER);
         mScanSettings = mBuilder.build();
     }
 
@@ -180,8 +195,8 @@ public class MainActivity extends AppCompatActivity {
             ScanRecord mScanRecord = result.getScanRecord();
             try {
 
-               listItems.add(0, mScanRecord.getDeviceName() + "_" + BeaconInfo(mScanRecord.getBytes()) + "_"
-                        + getDistance(calculateDistance(mScanRecord.getTxPowerLevel(), result.getRssi()),mScanRecord.getDeviceName()) + " " +df.format(new Date()));
+                listItems.add(0, mScanRecord.getDeviceName() + "_" + BeaconInfo(mScanRecord.getBytes()) + "_"
+                        + getDistance(calculateDistance(mScanRecord.getTxPowerLevel(), result.getRssi()), mScanRecord.getDeviceName()) + " " + df.format(new Date()));
 
                 adapter.addAll(listItems);
                 adapter.notifyDataSetChanged();
@@ -207,16 +222,18 @@ public class MainActivity extends AppCompatActivity {
             ScanRecord mScanRecord = result.getScanRecord();
             try {
                 int i = Integer.valueOf(hashReg.get(BeaconInfo(mScanRecord.getBytes()).toString()).split(";")[1]);
+                TextView tv= (TextView)findViewById(i);
                 String t = (hashReg.get(BeaconInfo(mScanRecord.getBytes()).toString())).split(";")[0] + " " + df.format(new Date()) + " "
                         + getDistance(calculateDistance(mScanRecord.getTxPowerLevel(), result.getRssi()),
-                        (hashReg.get(BeaconInfo(mScanRecord.getBytes()).toString())).split(";")[0]);
+                        hashReg.get(BeaconInfo(mScanRecord.getBytes()).toString()));
 
                 if (t != null) {
-                   // listItems.remove(i);
+                    // listItems.remove(i);
                    /* if (listItems.size()<=i)
                     {*/
-                        Log.d("mScanCallbackWithFind", "add item " + i + " " + t);
-                        listItems.add(0, t);
+                    Log.d("mScanCallbackWithFind", "add item " + i + " " + t);
+                    //listItems.add(0, t);
+                    tv.setText(t);
                    /* }else {
                         //listItems.add(i, t);
                         Log.d("mScanCallbackWithFind", "replace item " + i + " " + t);
@@ -230,23 +247,21 @@ public class MainActivity extends AppCompatActivity {
                     //adapter.add(mScanRecord.getDeviceName() + "_" + BeaconInfo(mScanRecord.getBytes()) + "_"
                     //   + getDistance(calculateDistance(mScanRecord.getTxPowerLevel(), result.getRssi())));
                 }
-                adapter.addAll(listItems);
-                adapter.notifyDataSetChanged();
+               // adapter.addAll(listItems);
+              //  adapter.notifyDataSetChanged();
                 Log.d("mScanCallback", mScanRecord.getDeviceName());
                 byte[] manufacturerData = mScanRecord.getManufacturerSpecificData(224);
                 Log.d("mScanCallback", String.valueOf(result.getRssi()));
                 int mRssi = result.getRssi();
-            }catch (Exception e)
-            {
-                Log.d("mScanCallbackWithFind", "Error " + e.getMessage() );
+            } catch (Exception e) {
+                Log.d("mScanCallbackWithFind", "Error " + e.getMessage());
             }
         }
     };
 
 
-
     public double calculateDistance(int txPower, double rssi) {
-       /* if (rssi == 0) {
+        if (rssi == 0) {
             return -1.0; // if we cannot determine accuracy, return -1.
         }
         double ratio = rssi * 1.0 / txPower;
@@ -254,21 +269,22 @@ public class MainActivity extends AppCompatActivity {
             return Math.pow(ratio, 10);
         } else {
             double accuracy = (0.89976) * Math.pow(ratio, 7.7095) + 0.111;
-            return accuracy;
+           // return accuracy;
+            return (Math.pow(10d, ((double) txPower - rssi) / (10 * 2))) / 1000;
 
 
-       }*/
-        return (Math.pow(10d,((double)txPower-rssi)/(10*2)))/1000;
+       }
+        //return (Math.pow(10d, ((double) txPower - rssi) / (10 * 2))) / 1000;
     }
 
-    private String getDistance(double accuracy,String s) {
+    private String getDistance(double accuracy, String s) {
         try {
             if (accuracy == -1.0) {
                 return "Unknown " + accuracy;
-            } else if (accuracy < 1) {
+            } else if (accuracy < 2) {
 
                 return "Immediate";
-            } else if (accuracy < 3) {
+            } else if (accuracy < 6) {
 
                 return "Near " + accuracy;
             } else {
@@ -289,14 +305,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void popup(String s)
-    {
+    private void popup(String s) {
         builder = new NotificationCompat.Builder(this);
-        builder.setContentTitle(s)
+        builder.setContentTitle(s.split(";")[0])
                 .setSmallIcon(R.drawable.ic_action_name)
                 .setDefaults(DEFAULT_SOUND | DEFAULT_VIBRATE)
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
         mNotificationManager.notify(index++, builder.build());
+        TextView t = (TextView)findViewById(Integer.valueOf(s.split(";")[1]));
+        t.setBackgroundColor(Color.GREEN);
     }
 
     @Override
@@ -317,11 +334,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void ScanNow() {
+        Button b= (Button)findViewById(R.id.FindS);
+        b.setEnabled(false);
+        b= (Button)findViewById(R.id.ScanB);
+        b.setEnabled(false);
         listItems.clear();
         adapter.notifyDataSetChanged();
         Log.d("ScanB", "ScanNow");
         //loadPermissions(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_FINE_LOCATION);
-       // loadPermissions(Manifest.permission.ACCESS_COARSE_LOCATION, REQUEST_FINE_LOCATION);
+        // loadPermissions(Manifest.permission.ACCESS_COARSE_LOCATION, REQUEST_FINE_LOCATION);
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         mBluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
@@ -334,12 +355,17 @@ public class MainActivity extends AppCompatActivity {
         adapter.notifyDataSetChanged();
         Log.d("FindB", "FindNow");
         ReadRegList();
-
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        createTextview();
+        Button b= (Button)findViewById(R.id.FindS);
+        b.setEnabled(false);
+        b= (Button)findViewById(R.id.ScanB);
+        b.setEnabled(false);
+       mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         mBluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
         for (Enumeration<String> s = hashReg.keys()
              ; s.hasMoreElements();
-             setScanFilter(s.nextElement().toString().split("_")[0].toString()));
+             setScanFilter(s.nextElement().toString().split("_")[0].toString()))
+            ;
         setScanSettings();
 
         //mBluetoothLeScanner.startScan(mScanCallback);
@@ -389,14 +415,14 @@ public class MainActivity extends AppCompatActivity {
                     hexString.substring(16, 20) + "-" +
                     hexString.substring(20, 32);
 
-           // String uuid = hexString.substring(0, 32);
+            // String uuid = hexString.substring(0, 32);
 
             //Here is your Major value
             int major = (scanRecord[startByte + 20] & 0xff) * 0x100 + (scanRecord[startByte + 21] & 0xff);
 
             //Here is your Minor value
             int minor = (scanRecord[startByte + 22] & 0xff) * 0x100 + (scanRecord[startByte + 23] & 0xff);
-            return uuid +"_" + major  + minor;
+            return uuid + "_" + major + minor;
         }
         return "N/A";
     }
@@ -406,19 +432,49 @@ public class MainActivity extends AppCompatActivity {
         byte[] data = new byte[len / 2];
         for (int i = 0; i < len; i += 2) {
             data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                    + Character.digit(s.charAt(i+1), 16));
+                    + Character.digit(s.charAt(i + 1), 16));
         }
         return data;
     }
 
-    public void sendMessage(View view,String message,Class c) {
+    public void sendMessage(View view, String message, Class c) {
         Intent intent = new Intent(this, c);
         intent.putExtra(EXTRA_MESSAGE, message);
         startActivity(intent);
     }
 
-    private void ReadRegList()
-    {
+    private void ReadRegList() {
+
         hashReg = SaveReadFromLocal.LoadAll(context);
+
+
     }
+
+    private void createTextview()
+    {
+
+      /*  hashReg
+                = new Hashtable<String, String>();
+        hashReg.put("one", "55555555555555555555");
+        hashReg.put("two", "33333333333333333333");
+        hashReg.put("three", "888888888888888888888");*/
+
+        ConstraintLayout cl = (ConstraintLayout) findViewById(R.id.Mainc);
+
+        int index= 0;
+        while (index < hashReg.size())  {
+            TextView t = new TextView(this);
+            t.setId(index);
+            t.setText(hashReg.get((hashReg.keySet().toArray())[index]));
+            t.setTextSize(22);
+            t.setPadding(20, (20+index*300) , 0, 0);
+           // t.setBackgroundColor(Color.GREEN);
+            cl.addView(t);
+
+            index++;
+        }
+
+    }
+
+
 }
