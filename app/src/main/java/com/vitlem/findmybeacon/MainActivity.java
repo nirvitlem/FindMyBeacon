@@ -238,7 +238,7 @@ public class MainActivity extends AppCompatActivity {
                 int mRssi = result.getRssi();
             }catch (Exception e)
             {
-                Log.d("mScanCallbackWithFind", "Error " + e.getMessage());
+                Log.d("mScanCallbackWithFind", "Error " + e.getMessage() );
             }
         }
     };
